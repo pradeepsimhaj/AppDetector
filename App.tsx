@@ -1,44 +1,68 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
 import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+  Text,
+  Button,
+  StyleSheet,
+  NativeModules,
+  DeviceEventEmitter,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+
+const { AppDetector } = NativeModules;
+
+const App = () => {
+  const [lastDetectedApp, setLastDetectedApp] = useState<string>('None');
+
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      'APP_CHANGED',
+      (packageName: string) => {
+        setLastDetectedApp(packageName);
+      }
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
-    </SafeAreaProvider>
-  );
-}
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.title}>App Detector</Text>
 
-function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
-
-  return (
-    <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
+      <Button
+        title="Enable Accessibility Service"
+        onPress={() => AppDetector.openAccessibilitySettings()}
       />
-    </View>
+
+      <Text style={styles.label}>Last detected app:</Text>
+      <Text style={styles.value}>{lastDetectedApp}</Text>
+    </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: 'center',
+    padding: 24,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  label: {
+    marginTop: 32,
+    fontSize: 16,
+    color: '#555',
+  },
+  value: {
+    marginTop: 8,
+    fontSize: 18,
+    fontWeight: '600',
   },
 });
 

@@ -1,97 +1,220 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# App Detector – React Native + Android Accessibility Service
 
-# Getting Started
+## Overview
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+**App Detector** is a React Native Android application that detects the **currently foreground app** on the device using Android’s **Accessibility Service** and displays the detected package name in real time.
 
-## Step 1: Start Metro
+This project was built as part of a technical assignment for **Gig Assistant** to demonstrate:
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+* Native Android (Kotlin) development
+* Accessibility Service configuration
+* React Native ↔ Android native bridging
+* Real-time event communication
+* Stability while switching between third-party apps
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+---
 
-```sh
-# Using npm
-npm start
+## Key Features
 
-# OR using Yarn
-yarn start
+### ✅ Foreground App Detection
+
+* Detects which app is currently active (e.g. `com.android.settings`, `com.android.chrome`, `com.whatsapp`)
+* Uses `TYPE_WINDOW_STATE_CHANGED` accessibility events
+
+### ✅ React Native ↔ Native Bridge
+
+* Android Accessibility Service emits app change events
+* Data is sent to React Native using a **custom native module** and `DeviceEventEmitter`
+
+### ✅ Live UI Updates
+
+* React Native UI updates instantly when the user switches apps
+* Displays:
+
+  ```
+  Last detected app: com.android.chrome
+  ```
+
+### ⭐ Bonus: Floating Overlay (Optional Feature)
+
+* Displays a small floating overlay (chat-head style) on top of other apps
+* Shows the current foreground app in real time
+* Implemented using Android `WindowManager`
+
+---
+
+## Tech Stack
+
+| Layer           | Technology                    |
+| --------------- | ----------------------------- |
+| UI              | React Native                  |
+| Native Android  | Kotlin                        |
+| System Access   | Android Accessibility Service |
+| Native Bridge   | React Native Native Module    |
+| Overlay (Bonus) | WindowManager                 |
+
+---
+
+## Project Structure (Important Files)
+
+```
+android/app/src/main/java/com/appdetector/
+├── AppDetectorAccessibilityService.kt   # Accessibility Service
+├── AppDetectorModule.kt                 # Native bridge to React Native
+├── AppDetectorPackage.kt                # ReactPackage registration
+├── FloatingOverlayManager.kt             # Floating overlay manager
+├── MainApplication.kt
+└── MainActivity.kt
+
+android/app/src/main/res/
+├── xml/accessibility_service_config.xml
+└── layout/floating_overlay.xml
+
+App.tsx                                   # React Native UI
 ```
 
-## Step 2: Build and run your app
+---
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+## How the App Works (High-Level Flow)
 
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+```
+User switches app
+      ↓
+AccessibilityService receives event
+      ↓
+Foreground app package detected
+      ↓
+Native Module emits event
+      ↓
+React Native UI updates in real time
+      ↓
+(Optional) Floating overlay updates text
 ```
 
-### iOS
+---
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+## Setup & Installation
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+### Prerequisites
 
-```sh
-bundle install
+* Node.js (≥ 16)
+* Android Studio
+* Android SDK
+* Java JDK 17
+* Android device or emulator (Android 8+ recommended)
+
+---
+
+### Install Dependencies
+
+```bash
+npm install
 ```
 
-Then, and every time you update your native dependencies, run:
+---
 
-```sh
-bundle exec pod install
+### Run the App on Android
+
+```bash
+npx react-native run-android
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+---
 
-```sh
-# Using npm
-npm run ios
+## Required Permissions (Manual)
 
-# OR using Yarn
-yarn ios
+### 1. Enable Accessibility Service
+
+1. Open **Settings**
+2. Go to **Accessibility**
+3. Find **App Detector**
+4. Enable the service
+
+### 2. Enable Overlay Permission (Bonus Feature)
+
+1. Open **Settings**
+2. Go to **Apps → App Detector**
+3. Enable **Display over other apps**
+
+---
+
+## How to Test the App (Demo Flow)
+
+1. Open **App Detector**
+2. Tap **Enable Accessibility Service**
+3. Enable the service in system settings
+4. Press Home
+5. Open **Settings** or **Chrome**
+6. Return to App Detector
+
+### Expected Output
+
+```
+Last detected app: com.android.settings
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+If overlay permission is enabled, a floating overlay will also show the detected app.
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+---
 
-## Step 3: Modify your app
+## Handling Real-World Edge Cases
 
-Now that you have successfully run the app, let's make changes!
+* Launcher apps (e.g. `com.android.launcher`) are filtered out
+* The app ignores its own package name
+* Duplicate accessibility events are deduplicated for stability
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+This ensures accurate and meaningful detection in real usage scenarios.
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+---
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+## Why Accessibility Service?
 
-## Congratulations! :tada:
+Android does not allow regular applications to detect foreground apps for privacy reasons.
+Accessibility Services are the **approved system-level mechanism** for observing window and UI state changes, making them suitable for assistive and productivity tools like **Gig Assistant**.
 
-You've successfully run and modified your React Native App. :partying_face:
+---
 
-### Now what?
+## Build APK (Optional)
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+To generate a debug APK:
 
-# Troubleshooting
+```bash
+cd android
+./gradlew assembleDebug
+```
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+APK location:
 
-# Learn More
+```
+android/app/build/outputs/apk/debug/
+```
 
-To learn more about React Native, take a look at the following resources:
+---
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+## Demo Video
+
+The demo video demonstrates:
+
+* Enabling Accessibility Service
+* Switching between apps
+* Live detection in React Native UI
+* Floating overlay updating in real time
+
+---
+
+## Summary
+
+This project demonstrates:
+
+* Correct use of Android Accessibility APIs
+* Clean React Native ↔ Kotlin bridging
+* Real-time system event handling
+* Production-style filtering and stability
+* Optional advanced Android overlay integration
+
+---
+
+## Author
+
+**Pradeep Simha**
+React Native & Full Stack Developer
